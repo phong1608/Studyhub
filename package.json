@@ -1,0 +1,41 @@
+{
+  "name": "learnhub",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "lint":"tsc --noEmit && eslint \"**/*.{js,ts}\" --quiet --fix",
+    "build-ts":"tsc",
+    "build":"npm run build-ts && npm run lint",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "ts-node-dev src/app.ts | pino-pretty"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/phong1608/LearnHub.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/phong1608/LearnHub/issues"
+  },
+  "homepage": "https://github.com/phong1608/LearnHub#readme",
+  "dependencies": {
+    "@types/express": "^5.0.0",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "pino-pretty": "^13.0.0",
+    "ts-node-dev": "^2.0.0",
+    "winston": "^3.17.0"
+  },
+  "devDependencies": {
+    "eslint": "^9.19.0",
+    "eslint-config-prettier": "^10.0.1",
+    "eslint-plugin-import": "^2.31.0",
+    "prettier": "^3.4.2",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.22.0"
+  }
+}
