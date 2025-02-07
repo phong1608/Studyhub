@@ -1,0 +1,223 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User{
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  password  String
+  userType   UserType @default(Student)
+  bio       String?
+  profilePicture String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  enrollments Enrollment[]
+  ratings     Rating[]
+  Cart Cart[]
+  Order Order[]
+  Instructor Instructor[]
+}
+enum UserType {
+  Student
+  Instructor
+  Organization
+}
+model Instructor{
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  Course Course[]
+}
+model Organization{
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  Album Album[]
+}
+model Album{
+  id        String   @id @default(cuid())
+  organizationId String
+  organization Organization @relation(fields: [organizationId], references: [id])
+  album     String[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  CourseAlbum CourseAlbum[]
+}
+model CourseAlbum{
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id])
+  albumId   String
+  album    Album    @relation(fields: [albumId], references: [id])
+  @@id([courseId, albumId])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+model Course{
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  thumbnail   String
+  instructorId String
+  instructor Instructor @relation(fields: [instructorId], references: [id])
+  level       CourseLevel
+  price       Float
+  categoryId  String
+  isPublished Boolean @default(false)
+  enrollments Enrollment[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  categories CourseCategory[]
+  Section Section[]
+  totalRating Float @default(0)
+  Rating Rating[]
+  Cart Cart[]
+  OrderCourse OrderCourse[]
+  CartItem CartItem[]
+  CourseAlbum CourseAlbum[]
+}
+model Category{
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  categories CourseCategory[]
+
+
+}
+model CourseCategory{
+  courseId   String
+  course     Course   @relation(fields: [courseId], references: [id])
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+  @@id([courseId, categoryId])
+
+}
+enum CourseLevel {
+  Beginner
+  Imtermediate
+  Advanced
+}
+model Cart{
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id])
+  createdAt DateTime @default(now())
+  cartItems CartItem[]
+}
+
+model CartItem {
+  @@id([cartId, courseId])
+  cartId    String
+  cart      Cart     @relation(fields: [cartId], references: [id])
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Order{
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  courseId  String
+  createdAt DateTime @default(now())
+  courses   OrderCourse[]
+
+}
+
+model OrderCourse {
+    orderId  String
+    order    Order   @relation(fields: [orderId], references: [id])
+    courseId String
+    course   Course  @relation(fields: [courseId], references: [id])
+    @@id([orderId, courseId])
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+model Section{
+  id        String   @id @default(cuid())
+  name      String
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id])
+  lessons   Lesson[]
+  position  Int @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Lesson{
+  id        String   @id @default(cuid())
+  name      String
+  sectionId String
+  lessonType LessonType
+  section   Section  @relation(fields: [sectionId], references: [id])
+  position  Int @unique
+  attachment String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  lessonVideo LessonVideo?
+  lessonText LessonText?
+}
+enum LessonType {
+  Video
+  Text
+  Quiz
+}
+
+model LessonVideo{
+  id        String   @id @default(cuid())
+  lessonId  String   @unique
+  lesson    Lesson   @relation(fields: [lessonId], references: [id])
+  videoUrl  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+model LessonText{
+  id String @id @default(cuid())
+  lessonId String @unique
+  lesson Lesson @relation(fields: [lessonId], references: [id])
+  content String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+
+model Enrollment{
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+model Rating{
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id])
+  rating    Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+

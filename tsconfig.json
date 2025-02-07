@@ -6,11 +6,10 @@
     "outDir": "./build",
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "lib": ["es2020", "dom"],
-    "skipLibCheck": true,
-    "skipDefaultLibCheck": true,
     "baseUrl": ".",
-    "paths": {}
+    "paths":{
+      "@elearn/*":["src/*"]
+    }
   },
   "include": ["src"],
   "exclude": ["node_modules"]
