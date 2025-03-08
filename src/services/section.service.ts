@@ -20,6 +20,32 @@ const addSection = async({courseId,name,position})=>{
         console.log(err)
     }
 }
+const getAllCourseSections = async(courseId:string)=>{
+    try{
+        const sections = await prisma.section.findMany({
+            where:{
+                courseId:courseId
+            },
+            select:{
+                id:true,
+                name:true,
+                position:true,
+                lessons:{
+                    select:{
+                        id:true,
+                        name:true,
+                        position:true,
+                        lessonType:true
+                    }
+                }
+            }
+        })
+        return sections
+    }
+    catch(err){
+        console.log(err)
+    }
+}
 const updateSection = async(sectionId:string,{name,position})=>{
     try{
         const updatedSection = await prisma.section.update({
@@ -51,4 +77,4 @@ const deleteLesson = async(sectionId:string)=>{
     }
 }
 
-export {addSection,updateSection,deleteLesson}
+export {addSection,updateSection,deleteLesson,getAllCourseSections}

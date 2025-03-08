@@ -4,7 +4,9 @@ import { Logger } from 'winston'
 import { LessonType } from '@prisma/client'
 import {  ILessonText, ILessonVideo } from '../interfaces/models/lesson.interface'
 import { removeUndefinedObject } from '../utils/index'
-import { ServerError } from '@elearn/interfaces/error.interface'
+import { ServerError } from '../interfaces/error.interface'
+import {uploadFile} from '../utils/S3Upload'
+import {fromBuffer} from 'file-type'
 const log:Logger = winstonLogger(process.env.ELASTIC_SEARCH_URL,'LessonService','debug')
 
 class LessonFactory{
@@ -57,6 +59,35 @@ class LessonFactory{
         console.log(err)
     }
   }
+  static async getFirstCourseLesson(courseId:string)
+  {
+    try{
+        const lesson = await prisma.lesson.findFirst({
+            where:{
+                section:{
+                  courseId:courseId
+                }
+            },
+            select:{
+              id:true,
+              name:true,
+              sectionId:true,
+              position:true,
+              lessonType:true,
+              attachment:true,
+              lessonVideo:true,
+              lessonText:true
+            },
+            orderBy:{
+              position: 'asc'
+            }
+        })
+        return lesson
+    }
+    catch(err){
+        console.log(err)
+    }
+  }
 
 }
 
@@ -93,12 +124,7 @@ class Lesson{
         where:{
           id:lessonId
         },
-        data:{
-          name:updatedLesson.name,
-          position:updatedLesson.position,
-          attachment:updatedLesson.attachment,
-
-        }
+        data:updatedLesson
       })
       return lesson
     }
@@ -110,13 +136,16 @@ class Lesson{
 
 
 
+
 }
 class LessonVideo extends Lesson{
   async createLesson(){
     const newLesson = await super.createLesson()
+    const file = (await fromBuffer((this.lesson as ILessonVideo).videoUrl)).ext
+    const videoUrl=await uploadFile((this.lesson as ILessonVideo).videoUrl,newLesson.id+'.'+file)
     await prisma.lessonVideo.create({
       data:{
-        videoUrl:(this.lesson as ILessonVideo).videoUrl,
+        videoUrl:videoUrl,
         lessonId:newLesson.id
       }
     })
@@ -126,13 +155,13 @@ class LessonVideo extends Lesson{
   {
     try{
       const updatedLesson:ILessonText|ILessonVideo = removeUndefinedObject(this)
-
+      const videoUrl=await uploadFile((this.lesson as ILessonVideo).videoUrl,updatedLesson.id)
       await prisma.lessonVideo.update({
         where:{
           lessonId:lessonId
         },
         data:{
-          videoUrl:(updatedLesson as ILessonVideo).videoUrl
+          videoUrl:videoUrl
         }
       })
       const lesson = await super.updateLesson(lessonId)
@@ -179,5 +208,6 @@ class LessonText extends Lesson
     }
   }
 }
+
 
 export {LessonFactory}

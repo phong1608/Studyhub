@@ -8,6 +8,8 @@ generator client {
   provider = "prisma-client-js"
 }
 
+
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
@@ -15,19 +17,23 @@ datasource db {
 
 model User{
   id        String   @id @default(cuid())
-  email     String   @unique
   name      String
-  password  String
+  email     String   @unique
   userType   UserType @default(Student)
+  password  String
   bio       String?
   profilePicture String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  organizeId String?
   enrollments Enrollment[]
   ratings     Rating[]
-  Cart Cart[]
+  Cart  Cart?
   Order Order[]
   Instructor Instructor[]
+  UserOrganization UserOrganization[]
+
+  Comment Comment[]
 }
 enum UserType {
   Student
@@ -48,23 +54,23 @@ model Organization{
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  Album Album[]
+  UserOrganization UserOrganization[]
+  OrganizationCourse OrganizationCourse[]
 }
-model Album{
-  id        String   @id @default(cuid())
+model UserOrganization {
+  userId String
+  user User @relation(fields: [userId], references: [id])
   organizationId String
   organization Organization @relation(fields: [organizationId], references: [id])
-  album     String[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  CourseAlbum CourseAlbum[]
+  @@id([userId, organizationId])
 }
-model CourseAlbum{
-  courseId  String
-  course    Course   @relation(fields: [courseId], references: [id])
-  albumId   String
-  album    Album    @relation(fields: [albumId], references: [id])
-  @@id([courseId, albumId])
+
+model OrganizationCourse{
+  courseId    String
+  course      Course   @relation(fields: [courseId], references: [id])
+  organizationId String
+  organization Organization @relation(fields: [organizationId], references: [id])
+  @@id([courseId, organizationId])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -77,48 +83,41 @@ model Course{
   instructor Instructor @relation(fields: [instructorId], references: [id])
   level       CourseLevel
   price       Float
-  categoryId  String
   isPublished Boolean @default(false)
   enrollments Enrollment[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  categories CourseCategory[]
   Section Section[]
   totalRating Float @default(0)
   Rating Rating[]
-  Cart Cart[]
   OrderCourse OrderCourse[]
   CartItem CartItem[]
-  CourseAlbum CourseAlbum[]
+
+  Discount Discount[]
+
+  OrganizationCourse OrganizationCourse[]
+  CategoryId String
+  category Category @relation(fields: [CategoryId], references: [id])
 }
+
 model Category{
   id        String   @id @default(cuid())
   name      String
+  description String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  categories CourseCategory[]
-
-
+  Course Course[]
 }
-model CourseCategory{
-  courseId   String
-  course     Course   @relation(fields: [courseId], references: [id])
-  categoryId String
-  category   Category @relation(fields: [categoryId], references: [id])
-  @@id([courseId, categoryId])
 
-}
 enum CourseLevel {
   Beginner
-  Imtermediate
+  Intermediate
   Advanced
 }
 model Cart{
   id        String   @id @default(cuid())
-  userId    String
+  userId    String   @unique
   user      User     @relation(fields: [userId], references: [id])
-  courseId  String
-  course    Course   @relation(fields: [courseId], references: [id])
   createdAt DateTime @default(now())
   cartItems CartItem[]
 }
@@ -176,6 +175,10 @@ model Lesson{
 
   lessonVideo LessonVideo?
   lessonText LessonText?
+
+  Comment Comment[]
+
+  Enrollment Enrollment[]
 }
 enum LessonType {
   Video
@@ -199,7 +202,16 @@ model LessonText{
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
-
+model Discount{
+  id        String   @id @default(cuid())
+  code      String   @unique
+  courseId  String   @unique
+  course    Course   @relation(fields: [courseId], references: [id])
+  amount    Float
+  public   Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
 
 model Enrollment{
   id        String   @id @default(cuid())
@@ -207,6 +219,9 @@ model Enrollment{
   user      User     @relation(fields: [userId], references: [id])
   courseId  String
   course    Course   @relation(fields: [courseId], references: [id])
+  lessonId String?
+  lesson    Lesson?   @relation(fields: [lessonId], references: [id])
+  @@unique([userId, courseId])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -217,7 +232,21 @@ model Rating{
   courseId  String
   course    Course   @relation(fields: [courseId], references: [id])
   rating    Int
+  review    String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
+model Comment {
+  id        String    @id @default(uuid())
+  message   String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  lesson    Lesson      @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  lessonId    String
+  parent    Comment?  @relation("ParentChild", fields: [parentId], references: [id], onDelete: Cascade)
+  children  Comment[] @relation("ParentChild")
+  parentId  String?
+}

@@ -30,6 +30,9 @@ const addInstructor = async({userId}:IInstructor)=>{
   }
 
 }
+const getUserCredentials = async(userId:string)=>{
+  return await prisma.user.findFirst({where:{id:userId}})
+}
 const getInstructorProfile = async(userId:string):Promise<Instructor|undefined>=>{
   try{
     const instructor = await prisma.instructor.findFirst({
@@ -53,5 +56,5 @@ const getInstructorProfile = async(userId:string):Promise<Instructor|undefined>=
 }
 
 
-export {addInstructor,getInstructorProfile}
+export {addInstructor,getInstructorProfile,getUserCredentials}
 

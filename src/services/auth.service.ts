@@ -20,14 +20,11 @@ const signIn = async ({email,password})=>{
       throw new BadRequestError('Invalid Credentials','Sign In')
     }
     const userId = user.id
-    const token = await createAuthToken({id:userId,username:user.name})
-    return {
-       userId:userId,
-       token:token
-      }
+    const token = await createAuthToken({id:userId,username:user.name,userType:user.userType})
+    return token
   }
   catch(err){
-    log.error('Error','signIn() method',err.message)
+    log.error(`signIn() method ${err.message}`)
     throw new ServerError('Internal Server Error ' + err,'Sign In')
   }
 }
@@ -47,7 +44,7 @@ const signUp = async (user: ISignup) =>{
     log.info(`User with email ${newUser.email} has been added`)
     return {
       newUser:newUser,
-      token: await createAuthToken({username:newUser.name,id:newUser.id})
+      token: await createAuthToken({username:newUser.name,id:newUser.id,userType:newUser.userType})
     }
   }
   catch(err){
