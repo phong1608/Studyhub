@@ -1,4 +1,4 @@
-
+import { UserType } from "@prisma/client";
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Express {
@@ -7,11 +7,11 @@ declare global {
     }
   }
 }
-import { UserType } from "@prisma/client";
 
 export interface IAuthPayload {
   id: string;
   username: string;
+  userType:UserType;
 }
 
 export interface ISignin{

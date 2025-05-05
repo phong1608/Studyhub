@@ -10,7 +10,8 @@ export interface ILesson{
 
 }
 export interface ILessonVideo extends ILesson{
-  videoUrl:string
+  videoUrl: Buffer,
+  summarize:string
 }
 export interface ILessonText extends ILesson{
   content:string

@@ -5,6 +5,10 @@ import { winstonLogger } from '../utils/logger'
 import { BadRequestError } from '../interfaces/error.interface'
 import { Instructor } from '@prisma/client';
 import { UserType } from '@prisma/client';
+import { IUserCredentials } from '../interfaces/models/user.interface';
+import { fromBuffer } from 'file-type';
+import { uploadFile } from '../utils/S3Upload';
+import { removeUndefinedObject } from '../utils';
 const log:Logger = winstonLogger(process.env.ELASTIC_SEARCH_URL,'UserService','debug')
 const addInstructor = async({userId}:IInstructor)=>{
   try{
@@ -30,6 +34,9 @@ const addInstructor = async({userId}:IInstructor)=>{
   }
 
 }
+const getUserCredentials = async(userId:string)=>{
+  return await prisma.user.findFirst({where:{id:userId}})
+}
 const getInstructorProfile = async(userId:string):Promise<Instructor|undefined>=>{
   try{
     const instructor = await prisma.instructor.findFirst({
@@ -52,6 +59,30 @@ const getInstructorProfile = async(userId:string):Promise<Instructor|undefined>=
   }
 }
 
+const updateUserProfile = async(userId: string, { name, bio, profilePicture }: IUserCredentials) => {
+  try {
+    const user = await prisma.user.findFirst({ where: { id: userId } });
+    if (!user) {
+      throw new BadRequestError(`User with userId ${userId} does not exist`, 'Update User Profile');
+    }
 
-export {addInstructor,getInstructorProfile}
+    const updatedObject = removeUndefinedObject({ name: name, bio: bio });
+    let profilePictureUrl = null;
+
+    if (profilePicture) {
+      const file = (await fromBuffer(profilePicture)).ext;
+      profilePictureUrl = await uploadFile(profilePicture, 'UserProfile/' + userId + '.' + file);
+      updatedObject.profilePicture = profilePictureUrl;
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: updatedObject,
+    });
+    return updatedUser;
+  } catch (err) {
+    log.error('error', 'updateUserProfile() method', err.message);
+  }
+};
+export {addInstructor,getInstructorProfile,getUserCredentials,updateUserProfile}
 

@@ -10,5 +10,11 @@ export interface IUser {
   bio?: string;
 
 }
+export interface IUserCredentials {
+  id?:string,
+  name?: string;
+  bio?: string;
+  profilePicture?: Buffer;
+}
 
 

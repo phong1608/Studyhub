@@ -1,10 +1,11 @@
-import { addSection,updateSection,deleteLesson } from "../services/section.service";
+import { addSection,updateSection,deleteLesson,getAllCourseSections } from "../services/section.service";
 import { StatusCodes } from "http-status-codes";
 import {Request,Response,NextFunction} from 'express'
 
 class SectionController{
   addSection = async(req:Request,res:Response,next:NextFunction):Promise<void>=>{
     try{
+      req.body.position = parseFloat(req.body.position)
       const newSection = await addSection(req.body)
       res.status(StatusCodes.CREATED).json(newSection)
     }
@@ -27,6 +28,16 @@ class SectionController{
     try{
       const deletedSection = await deleteLesson(req.params.id)
       res.status(StatusCodes.ACCEPTED).json(deletedSection)
+    }
+    catch(err)
+    {
+      next(err)
+    }
+  }
+  getAllCourseSections = async(req:Request,res:Response,next:NextFunction):Promise<void>=>{
+    try{
+      const sections = await getAllCourseSections(req.params.courseId)
+      res.status(StatusCodes.ACCEPTED).json(sections)
     }
     catch(err)
     {

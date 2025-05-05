@@ -1,12 +1,10 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
   provider = "prisma-client-js"
 }
+
+
 
 datasource db {
   provider = "postgresql"
@@ -15,24 +13,25 @@ datasource db {
 
 model User{
   id        String   @id @default(cuid())
-  email     String   @unique
   name      String
-  password  String
+  email     String   @unique
   userType   UserType @default(Student)
+  password  String
   bio       String?
   profilePicture String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   enrollments Enrollment[]
   ratings     Rating[]
-  Cart Cart[]
-  Order Order[]
+  Cart  Cart?
   Instructor Instructor[]
+
+  Comment Comment[]
 }
 enum UserType {
   Student
   Instructor
-  Organization
+  
 }
 model Instructor{
   id        String   @id @default(cuid())
@@ -42,32 +41,12 @@ model Instructor{
   updatedAt DateTime @updatedAt
 
   Course Course[]
-}
-model Organization{
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 
-  Album Album[]
+  Revenue Revenue[]
 }
-model Album{
-  id        String   @id @default(cuid())
-  organizationId String
-  organization Organization @relation(fields: [organizationId], references: [id])
-  album     String[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  CourseAlbum CourseAlbum[]
-}
-model CourseAlbum{
-  courseId  String
-  course    Course   @relation(fields: [courseId], references: [id])
-  albumId   String
-  album    Album    @relation(fields: [albumId], references: [id])
-  @@id([courseId, albumId])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
+
+
+
 model Course{
   id          String   @id @default(cuid())
   name        String
@@ -77,48 +56,38 @@ model Course{
   instructor Instructor @relation(fields: [instructorId], references: [id])
   level       CourseLevel
   price       Float
-  categoryId  String
   isPublished Boolean @default(false)
   enrollments Enrollment[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  categories CourseCategory[]
   Section Section[]
-  totalRating Float @default(0)
   Rating Rating[]
-  Cart Cart[]
-  OrderCourse OrderCourse[]
   CartItem CartItem[]
-  CourseAlbum CourseAlbum[]
+
+  Discount Discount[]
+
+  CategoryId String
+  category Category @relation(fields: [CategoryId], references: [id])
 }
+
 model Category{
   id        String   @id @default(cuid())
   name      String
+  description String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  categories CourseCategory[]
-
-
+  Course Course[]
 }
-model CourseCategory{
-  courseId   String
-  course     Course   @relation(fields: [courseId], references: [id])
-  categoryId String
-  category   Category @relation(fields: [categoryId], references: [id])
-  @@id([courseId, categoryId])
 
-}
 enum CourseLevel {
   Beginner
-  Imtermediate
+  Intermediate
   Advanced
 }
 model Cart{
   id        String   @id @default(cuid())
-  userId    String
+  userId    String   @unique
   user      User     @relation(fields: [userId], references: [id])
-  courseId  String
-  course    Course   @relation(fields: [courseId], references: [id])
   createdAt DateTime @default(now())
   cartItems CartItem[]
 }
@@ -133,34 +102,18 @@ model CartItem {
   updatedAt DateTime @updatedAt
 }
 
-model Order{
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  courseId  String
-  createdAt DateTime @default(now())
-  courses   OrderCourse[]
 
-}
-
-model OrderCourse {
-    orderId  String
-    order    Order   @relation(fields: [orderId], references: [id])
-    courseId String
-    course   Course  @relation(fields: [courseId], references: [id])
-    @@id([orderId, courseId])
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-}
 model Section{
   id        String   @id @default(cuid())
   name      String
   courseId  String
   course    Course   @relation(fields: [courseId], references: [id])
   lessons   Lesson[]
-  position  Int @unique
+  position  Int 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+   @@unique([courseId, position])
+
 }
 
 model Lesson{
@@ -169,18 +122,19 @@ model Lesson{
   sectionId String
   lessonType LessonType
   section   Section  @relation(fields: [sectionId], references: [id])
-  position  Int @unique
+  position  Int 
   attachment String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
   lessonVideo LessonVideo?
   lessonText LessonText?
+  Comment Comment[]
+  Enrollment Enrollment[]
+  @@unique([sectionId, position])
 }
 enum LessonType {
   Video
   Text
-  Quiz
 }
 
 model LessonVideo{
@@ -189,6 +143,7 @@ model LessonVideo{
   lesson    Lesson   @relation(fields: [lessonId], references: [id])
   videoUrl  String
   createdAt DateTime @default(now())
+  summarize String?
   updatedAt DateTime @updatedAt
 }
 model LessonText{
@@ -199,7 +154,30 @@ model LessonText{
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+model Discount{
+  id        String   @id @default(cuid())
+  code      String   @unique
+  courseId  String   @unique
+  course    Course   @relation(fields: [courseId], references: [id])
+  type      DiscountType
+  amount    Float
+  public   Boolean @default(false)
+  expiredAt DateTime?
+  status    DiscountStatus @default(Active)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
 
+enum DiscountStatus {
+  Active
+  Expired
+  Disabled
+  
+}
+enum DiscountType {
+  Percentage
+  Fixed
+}
 
 model Enrollment{
   id        String   @id @default(cuid())
@@ -207,6 +185,10 @@ model Enrollment{
   user      User     @relation(fields: [userId], references: [id])
   courseId  String
   course    Course   @relation(fields: [courseId], references: [id])
+  lessonId String?
+  lesson    Lesson?   @relation(fields: [lessonId], references: [id])
+  rating    Int?
+  @@unique([userId, courseId])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -217,7 +199,30 @@ model Rating{
   courseId  String
   course    Course   @relation(fields: [courseId], references: [id])
   rating    Int
+  review    String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
+model Comment {
+  id        String    @id @default(uuid())
+  message   String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  lesson    Lesson      @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  lessonId    String
+  parent    Comment?  @relation("ParentChild", fields: [parentId], references: [id], onDelete: Cascade)
+  children  Comment[] @relation("ParentChild")
+  parentId  String?
+}
+
+model Revenue{
+  id        String   @id @default(cuid())
+  instructorId String
+  instructor Instructor @relation(fields: [instructorId], references: [id])
+  amount    Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

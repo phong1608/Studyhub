@@ -1,13 +1,14 @@
 import { LessonFactory } from "../services/lesson.service";
 import { Request,Response,NextFunction } from "express";
 import { StatusCodes } from "http-status-codes";
-
 class LessonController
 {
   addLesson = async(req:Request,res:Response,next:NextFunction):Promise<void>=>{
     try{
-      const lesson = req.body
-      const newLesson = await LessonFactory.createLesson(req.body.lessonType,lesson)
+
+      const video = req.file.buffer
+      req.body.position = parseFloat(req.body.position)
+      const newLesson = await LessonFactory.createLesson(req.body.lessonType,{videoUrl:video,...req.body})
       res.status(StatusCodes.CREATED).json(newLesson)
     }
     catch(err)
@@ -39,6 +40,16 @@ class LessonController
     try{
       const deletedLesson = await LessonFactory.deleteLesson(req.params.id)
       res.status(StatusCodes.ACCEPTED).json(deletedLesson)
+    }
+    catch(err)
+    {
+      next(err)
+    }
+  }
+  getCourseFirstLesson = async(req:Request,res:Response,next:NextFunction):Promise<void>=>{
+    try{
+      const lesson = await LessonFactory.getFirstCourseLesson(req.params.courseId)
+      res.status(StatusCodes.OK).json(lesson)
     }
     catch(err)
     {

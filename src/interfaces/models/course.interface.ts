@@ -1,24 +1,23 @@
-import { CourseLevel,Category } from "@prisma/client"
+import { CourseLevel } from "@prisma/client"
 
 export interface ICourseCreate{
-  title:string,
+  name:string,
   description:string,
-  thumbnail:string,
+  thumbnail:Buffer,
   level:CourseLevel,
-  price:number,
-  categoryId:string,
+  price:string,
+  category:string
 }
 
 
 export interface ICourseContext{
+  id:string;
   name:string;
-  description:string;
   thumbnail:string;
   level:CourseLevel;
   price:number;
-  categories:Category[];
+  discount_price:number;
   instructor:string,
   createdAt:Date;
-  updatedAt:Date;
-
+  rating:number;
 }
