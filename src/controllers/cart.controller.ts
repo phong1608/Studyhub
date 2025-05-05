@@ -1,4 +1,4 @@
-import {addToCart,getUserCart} from '../services/cart.service'
+import {addToCart,getUserCart,removeFromCart} from '../services/cart.service'
 import {addEnrollemntFromCart} from '../services/enrollment.service'
 import { Request,Response,NextFunction } from "express";
 import { StatusCodes } from "http-status-codes";
@@ -34,6 +34,16 @@ class CartController{
         catch(err){
             next(err)
             
+        }
+    }
+    removeFromCart = async(req:Request,res:Response,next:NextFunction):Promise<void>=>{
+        try{
+            res.status(StatusCodes.ACCEPTED).json(await removeFromCart(req.currentUser.id,req.params.courseId))
+           
+        }
+        catch(err)
+        {
+            next(err)
         }
     }
 }

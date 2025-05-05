@@ -1,73 +1,98 @@
-import prisma from "prisma/prsima-client";
-import { winstonLogger } from "../utils/logger";
-import { Logger } from "winston";
-import Discount from "../interfaces/models/discount.interface";
+import prisma from "../../prisma/prsima-client";
+import { IDiscountCreate } from "../interfaces/models/discount.inteface";
+import { DiscountType, DiscountStatus } from "@prisma/client";
+import { getCourse } from "./course.service";
 
-
-const log:Logger = winstonLogger(process.env.ELASTIC_SEARCH_URL,'DiscountService','debug')
-
-const addDiscount = async(userId:string,{courseId,amount,code,isPublic}:Discount)=>{
-    try{
-        const course = await prisma.course.findUnique({
-            where:{
-                id:courseId,
-                instructorId:userId
-            }
+const addDiscount = async ({ code, courseId, amount, type, status, expiredAt, public: isPublic }: IDiscountCreate) => {
+    const discount = await prisma.discount.create({
+        data: {
+            code,
+            courseId,
+            amount,
+            type: type as DiscountType,
+            status: status as DiscountStatus,
+            expiredAt: new Date(expiredAt),
+            public: isPublic,
         }
-        )
-        if(!course){
-            throw new Error('User is not authorized to add discount')
-        }
-        const discount = await prisma.discount.create({
-            data:{
-                amount:amount,
-                courseId:courseId,
-                code:code,
-                public:isPublic
-            }
-        })
-        log.info(`New discount added to ${courseId}`)
-        return discount
-    }
-    catch(err){
-        log.error(`addDiscount() method ${err.message}`);
-        throw err
-    }
+    });
+    return discount;
 }
 
-const deleteDiscount = (discountId:string)=>{
-    try{
-        prisma.discount.delete({
-            where:{
-                id:discountId
-            }
-        })
-        log.info(`Discount with id ${discountId} has been deleted`)
-    }
-    catch(err){
-        log.error(`deleteDiscount() method ${err.message}`)
-        throw err
-    }
-}
-const applyDiscount = async(code:string,courseId:string)=>{
-    try{
-        const discount = await prisma.discount.findUnique({
-            where:{
-                code:code,
-                courseId:courseId
-            }
-        })
-        if(!discount)
-        {
-            throw new Error('Discount not found')
+const getAllDiscountByUserId = async (userId: string) => {
+    const instructor = await prisma.instructor.findFirst({
+        where: {
+            userId: userId
         }
-        return discount
-        
-        
+    })
+    if (!instructor) {
+        throw new Error("Instructor not found")
     }
-    catch(err){
-        log.error(`applyDiscount() method ${err.message}`)
-        throw err
-    }
+    const discounts = await prisma.discount.findMany({
+        where: {
+            course: {
+                instructorId: instructor.id
+            }
+        },
+        include: {
+            course: {
+                select: {
+                    id: true,
+                    name: true
+                }
+            }
+        }
+    });
+    return discounts;
 }
-export {addDiscount, deleteDiscount,applyDiscount}
+
+const getDicountByCourseId = async (courseId: string) => {
+    const discount = await prisma.discount.findFirst({
+        where: {
+            courseId: courseId,
+            status: DiscountStatus.Active,
+            public: true,
+            expiredAt: {
+                gte: new Date()
+            }
+        },
+        include: {
+            course: {
+                select: {
+                    id: true,
+                    name: true,
+                    price: true 
+                }
+            }
+        }
+    })
+    if (!discount) {
+        return null
+    }
+    return discount
+}
+
+const calculateDiscountedPrice = async (courseId: string) => {
+    const course = await getCourse(courseId)
+    const discount = await getDicountByCourseId(courseId);
+    const originalPrice = course.price; 
+    if(!discount)
+    {
+        return originalPrice
+    }
+    let discountedPrice = originalPrice;
+    if (!discount || !discount.course) {
+        return originalPrice
+    }
+
+
+
+    if (discount.type === DiscountType.Percentage) {
+        discountedPrice = originalPrice - (originalPrice * discount.amount / 100);
+    } else if (discount.type === DiscountType.Fixed) {
+        discountedPrice = originalPrice - discount.amount;
+    }
+
+    return Math.max(discountedPrice, 0); 
+}
+
+export { addDiscount, getAllDiscountByUserId, getDicountByCourseId, calculateDiscountedPrice }

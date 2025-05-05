@@ -1,5 +1,5 @@
 import { Request,Response,NextFunction } from "express";
-import { addCourse,getCourse,updateCourse,publishCourse,getAllCourse,getCourseByInstructorId } from "../services/course.service";
+import { addCourse,getCourse,updateCourse,publishCourse,getAllCourse,getCourseByInstructorId,getCourseByCategoryId,getCourseWithRating,getSearchCourse,getInstructorCourse,updateCourseByCourseId } from "../services/course.service";
 import { StatusCodes } from "http-status-codes";
 
 class CourseController{
@@ -58,9 +58,65 @@ class CourseController{
   }
   getCourseByInstructorId = async(req:Request,res:Response,next:NextFunction):Promise<void>=>{
     try{
-      const courses = await getCourseByInstructorId(req.params.id)
+      const courses = await getCourseByInstructorId(req.params.instructorId)
       res.status(StatusCodes.ACCEPTED).json(courses)
 
+    }
+    catch(err)
+    {
+      next(err)
+    }
+  }
+  getCourseByCategoryId = async(req:Request,res:Response,next:NextFunction):Promise<void>=>{
+    try{
+      const courses = await getCourseByCategoryId(req.params.categoryId, parseInt(req.params.page, 10), 9, req.query);
+      res.status(StatusCodes.ACCEPTED).json(courses)
+    }
+    catch(err)
+    {
+      next(err)
+    }
+  }
+  getCourseWithRating = async(req:Request,res:Response,next:NextFunction):Promise<void>=>{
+    try{
+      const courses = await getCourseWithRating(req.params.courseId);
+      res.status(StatusCodes.ACCEPTED).json(courses)
+    }
+    catch(err)
+    {
+      next(err)
+    }
+  }
+  getCourseBySearch = async(req:Request,res:Response,next:NextFunction):Promise<void>=>{
+    try{
+      const courses = await getSearchCourse(req.params.search,parseInt(req.params.page, 10), 9, req.query);
+      res.status(StatusCodes.ACCEPTED).json(courses)
+    }
+    catch(err)
+    {
+      next(err)
+    }
+  }
+  getIntructorCourse = async(req:Request,res:Response,next:NextFunction):Promise<void>=>{
+    try{
+      const courses = await getInstructorCourse(req.currentUser.id)
+      res.status(StatusCodes.ACCEPTED).json(courses)
+    }
+    catch(err)
+    {
+      next(err)
+    }
+  }
+  updateCourseByCourseId = async(req:Request,res:Response,next:NextFunction):Promise<void>=>{
+    try{
+      const course = req.body
+      if(req.file){
+
+        course.thumbnail = req.file.buffer
+      }
+      const updatedCourse = await updateCourseByCourseId(req.params.courseId,course)
+      console.log(course)
+      res.status(StatusCodes.ACCEPTED).json(updatedCourse)
     }
     catch(err)
     {

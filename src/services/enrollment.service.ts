@@ -1,12 +1,21 @@
 import prisma from "../../prisma/prsima-client";
 
+import { addNewRevenue } from './revenue.service';
+import {calculateDiscountedPrice } from './discount.service';
 
-
-const addEnrollemnt = async (userId: string,courseId:string) => {
+const addEnrollemnt = async (cartId: string,courseId:string) => {
   try {
+    const userCart = await prisma.cart.findUnique({
+      where: {
+        id: cartId
+      },
+      include: {
+        user: true
+      }
+    })
     const newEnrollment = await prisma.enrollment.create({
       data: {
-        userId: userId,
+        userId: userCart.user.id,
         courseId: courseId
       }
     });
@@ -16,11 +25,11 @@ const addEnrollemnt = async (userId: string,courseId:string) => {
     console.log(err);
   }
 }
-const addEnrollemntFromCart = async (userId: string) => {
+const addEnrollemntFromCart = async (cartId: string) => {
   try {
     const userCart = await prisma.cart.findUnique({
       where: {
-        userId: userId
+        id: cartId
       },
       include: {
         cartItems: {
@@ -28,16 +37,24 @@ const addEnrollemntFromCart = async (userId: string) => {
             course: {
               select: {
                 id: true,
+                instructorId: true,
               }
             }
           }
         }
       }
     });
-    const courseId = userCart.cartItems.map((item) => item.course.id);
+    const courses = userCart.cartItems.map((item) => item.course);
 
-    courseId.forEach(async (courseId) => {
-      await addEnrollemnt(userId, courseId);
+    courses.forEach(async (course) => {
+      await addEnrollemnt(cartId, course.id);
+      const amount = await calculateDiscountedPrice(course.id)
+      await addNewRevenue(course.instructorId, amount);
+    })
+    await prisma.cartItem.deleteMany({
+      where: {
+        cartId: userCart.id
+      }
     })
   }
    catch (err) {

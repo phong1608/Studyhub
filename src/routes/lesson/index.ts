@@ -5,7 +5,8 @@ import multer from 'multer'
 const storage = multer.memoryStorage()
 const upload = multer({storage:storage})
 const router = Router();
+router.post('/update/:id',authMiddlware.verifyUser,lessonController.updateLesson)
 router.post('/create',authMiddlware.verifyUser,upload.single('videoUrl'),lessonController.addLesson)
-router.get('/:lessonId',lessonController.getLessonById)
+router.get('/:id',lessonController.getLessonById)
 router.get('/course/:courseId',lessonController.getCourseFirstLesson)
 export default router

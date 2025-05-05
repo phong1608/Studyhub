@@ -3,7 +3,6 @@ import { NextFunction,Request,Response } from "express";
 import jwt from "jsonwebtoken"
 import {NotAuthorizedError,ServerError} from "../interfaces/error.interface"
 import { checkUserEnrollment } from '../services/enrollment.service';
-import { UserType } from '@prisma/client';
 
 
 
@@ -54,23 +53,22 @@ class AuthMiddleware{
           next(err)
       }
   }
-  verifyOrganization = async(req:Request,res:Response,next:NextFunction) => {
+  
+
+  verifyInstructor = async (req:Request, res:Response,next:NextFunction) => {
     try{
       if(!req.currentUser)
-        {
-            throw new NotAuthorizedError(`Authorization is required`,"Verify Organization")
-        }
-        if(req.currentUser.userType!==UserType.Organization)
-        {
-            throw new NotAuthorizedError(`User is not an organization`,"Verify Organization")
-        }
-        next()
+      {
+          throw new NotAuthorizedError(`Authorization is required`,"Verify Instructor")
+      }
+      
+      next()
     }
     catch(err)
     {
         next(err)
     }
-
   }
+
 }
 export default new AuthMiddleware()

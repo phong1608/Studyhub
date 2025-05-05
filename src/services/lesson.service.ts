@@ -10,6 +10,7 @@ import {fromBuffer} from 'file-type'
 const log:Logger = winstonLogger(process.env.ELASTIC_SEARCH_URL,'LessonService','debug')
 
 class LessonFactory{
+  
   static async createLesson(type:string,payload:ILessonText|ILessonVideo){
     switch(type){
       case LessonType.Video:
@@ -40,6 +41,7 @@ class LessonFactory{
   {
     switch(type){
       case LessonType.Video:
+        console.log(lessonId)
         return new LessonVideo(payload).updateLesson(lessonId)
       case LessonType.Text:
         return new LessonText(payload).updateLesson(lessonId)
@@ -76,7 +78,8 @@ class LessonFactory{
               lessonType:true,
               attachment:true,
               lessonVideo:true,
-              lessonText:true
+              lessonText:true,
+
             },
             orderBy:{
               position: 'asc'
@@ -119,7 +122,15 @@ class Lesson{
   async updateLesson(lessonId:string)
   {
     try{
-      const updatedLesson:ILessonText|ILessonVideo = removeUndefinedObject(this)
+      const updatedLesson:ILessonText|ILessonVideo =  removeUndefinedObject({
+        name: this.lesson.name,
+        sectionId: this.lesson.sectionId,
+        position: this.lesson.position,
+        lessonType: this.lesson.lessonType,
+        attachment: this.lesson.attachment
+      });
+      
+      
       const lesson=await prisma.lesson.update({
         where:{
           id:lessonId
@@ -154,14 +165,13 @@ class LessonVideo extends Lesson{
   async updateLesson(lessonId:string)
   {
     try{
-      const updatedLesson:ILessonText|ILessonVideo = removeUndefinedObject(this)
-      const videoUrl=await uploadFile((this.lesson as ILessonVideo).videoUrl,updatedLesson.id)
+      const summarize = (this.lesson as ILessonVideo).summarize
       await prisma.lessonVideo.update({
         where:{
           lessonId:lessonId
         },
         data:{
-          videoUrl:videoUrl
+          summarize:summarize
         }
       })
       const lesson = await super.updateLesson(lessonId)
@@ -169,8 +179,8 @@ class LessonVideo extends Lesson{
     }
     catch(err)
     {
-      throw new ServerError('Internal Server Error',err.message)
-    }
+      throw new ServerError('Internal Server Error', err.message);
+          }
   }
 }
 

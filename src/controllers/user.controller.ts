@@ -1,5 +1,5 @@
 import { signIn,signUp } from "../services/auth.service";
-import {addInstructor,getInstructorProfile,getUserCredentials} from '../services/user.service'
+import {addInstructor,getInstructorProfile,getUserCredentials,updateUserProfile} from '../services/user.service'
 import {NextFunction, Request,Response} from 'express'
 import { StatusCodes } from "http-status-codes";
 import {NotAuthorizedError} from '../interfaces/error.interface'
@@ -9,7 +9,12 @@ class UserController{
 
       const user = req.body
       const newUser = await signUp(user)
-
+      const token = newUser.token
+      res.cookie('token', token, {
+        httpOnly: true,
+        secure: true,
+        maxAge: 3600000
+    });
       res.status(StatusCodes.CREATED).json(newUser)
     }
     catch(err)
@@ -75,6 +80,25 @@ class UserController{
         throw new NotAuthorizedError("Authorization Required","Get Instructor")
       }
       res.status(StatusCodes.OK).json(await getInstructorProfile(req.params.id))
+    }
+    catch(err)
+    {
+      next(err)
+    }
+  }
+  updateUserProfile = async(req:Request,res:Response,next:NextFunction):Promise<void>=>{
+    try{
+      if(!req.currentUser)
+      {
+        throw new NotAuthorizedError("Authorization Required","Update User Profile")
+      }
+      const user = req.body
+      if(req.file)
+      {
+        user.profilePicture = req.file.buffer      
+      }
+      const updatedUser = await updateUserProfile(req.currentUser.id,user)
+      res.status(StatusCodes.OK).json(updatedUser)
     }
     catch(err)
     {

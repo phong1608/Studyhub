@@ -7,6 +7,9 @@ import commentRouter from './comment/index'
 import categoryRouter from './category/index'
 import cartRouter from './cart/index'
 import enrollmentRouter from './enrollment/index'
+import ratingRouter from './rating/index'
+import discountRouter from './discount/index'
+import paymentRouter from './payment/index'
 const router = Router()
 
 router.use('/user',userRouter)
@@ -17,4 +20,7 @@ router.use('/comment',commentRouter)
 router.use('/category',categoryRouter)
 router.use('/cart',cartRouter)
 router.use('/enrollment',enrollmentRouter)
+router.use('/rating',ratingRouter)
+router.use('/discount',discountRouter)
+router.use('/payment',paymentRouter)
 export default router
