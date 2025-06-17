@@ -19,5 +19,5 @@ jobs:
 
 
       - name: 📦 Build Docker Compose services
-        run: docker-compose -f docker-compose.yml build
+        run: docker compose -f docker-compose.yml build
 
