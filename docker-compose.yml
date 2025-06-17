@@ -1,28 +1,39 @@
 version: '3.8'
-services:
-  nest-api:
-    container_name: nest-api
-    build:
-      context: .
-      dockerfile: Dockerfile
-    ports:
-      - '3000:3000'
-    depends_on:
-      - postgres
-    env_file:
-      - .env
 
-  postgres:
+services:
+  db:
     image: postgres:15
-    container_name: postgres
-    restart: always
-    ports:
-      - '5432:5432'
-    env_file:
-      - .env
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: mydatabase
     volumes:
-      - postgres:/var/lib/postgresql/data
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      - DATABASE_URL=postgres://user:password@db:5432/mydatabase
+    ports:
+      - "4000:4000"
+    depends_on:
+      - db
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    environment:
+      - NEXT_PUBLIC_API=http://localhost:4000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
 
 volumes:
-  postgres:
-    name: nest-db
+  db_data:
+
