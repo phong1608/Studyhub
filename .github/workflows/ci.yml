@@ -1,3 +1,4 @@
+
 name: CI
 
 on:
@@ -5,35 +6,29 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
-
 env:
   CONTAINER_NAME: learnhub
 
 jobs:
   build:
+
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
         node-version: [18.x, 20.x]
+        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
     - uses: actions/checkout@v4
-
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
-
-    - name: Install backend dependencies
-      working-directory: ./backend
-      run: npm ci
-
-    - name: Build backend
-      working-directory: ./backend
-      run: npm run build --if-present
-
+    - run: cd backend
+    - run: npm install
+    - run: npm run build --if-present
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
 
@@ -42,10 +37,11 @@ jobs:
       with:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
-
     - name: Build and push Docker image
       uses: docker/build-push-action@v5
       with:
         context: ./backend
         push: true
         tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.CONTAINER_NAME }}:latest
+
+ 
