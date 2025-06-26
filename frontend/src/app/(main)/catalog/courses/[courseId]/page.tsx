@@ -11,11 +11,13 @@ import ReviewCard from '@/components/ReviewCard';
 import { FaVideo,FaTv } from "react-icons/fa";
 import { IoMdDocument } from "react-icons/io";
 import {toast} from 'react-toastify'
+import { useRouter } from 'next/navigation';
 
 const CourseDetailPage = () => {
   const { courseId } = useParams()
   const course = useApi<Course>(`course/${courseId}`, { method: 'GET' })
   const reviews = useApi<ReviewCardProps[]>(`rating/course/${courseId}/page=1`, { method: 'GET' })
+  const router = useRouter()
   const handleAddToCart = async () => {
     try {
       await axios.post(`http://localhost:3333/cart/add/${courseId}`, {}, { withCredentials: true });
@@ -25,6 +27,9 @@ const CourseDetailPage = () => {
       toast.info("Khóa học đã mua hoặc đã có trong giỏ hàng");
     }
   };
+  const handlePurchase = ()=>{
+    router.push(`/payment/checkout/${courseId}`)
+  }
  
 
   return (
@@ -93,7 +98,7 @@ const CourseDetailPage = () => {
 
             {/* Curriculum */}
             <div className="bg-white rounded-xl shadow-lg p-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Nội dung khóa họct</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">Nội dung khóa học</h2>
               <div className="border rounded-lg overflow-hidden">
                 <Section 
                   isDisable={true} 
@@ -133,12 +138,21 @@ const CourseDetailPage = () => {
                 <div className="p-6">
                   <div className="mb-4">
                     <div className="flex items-end gap-2">
+                    {course.data?.dicount_price &&course.data.dicount_price>0 ? (
+                      <>
+                        <span className="text-3xl font-bold text-gray-900">
+                          {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(course.data.dicount_price)}
+                        </span>
+                        <span className="text-gray-500 line-through">
+                          {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(course.data.price)}
+                        </span>
+                      </>
+                    ) : (
                       <span className="text-3xl font-bold text-gray-900">
                         {course.data ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(course.data.price) : 'N/A'}
                       </span>
-                      <span className="text-gray-500 line-through">{course.data ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(3000000) : 'N/A'}
-                      </span>
-                    </div>
+                    )}
+                  </div>
                   </div>
 
                   <button 
@@ -148,7 +162,7 @@ const CourseDetailPage = () => {
                     Thêm vào giỏ hàng
                   </button>
                   
-                  <button className="w-full mt-3 bg-slate-100 hover:bg-gray-800  text-black py-3 px-4 rounded-lg transition-colors duration-200">
+                  <button onClick={handlePurchase} className="w-full mt-3 bg-slate-100 hover:bg-gray-800  text-black py-3 px-4 rounded-lg transition-colors duration-200">
                     Mua luôn
                   </button>
                     <h2 className="text-sm mt-10 font-semibold text-gray-900 mb-4">Khóa học này bao gồm:</h2>
@@ -156,11 +170,11 @@ const CourseDetailPage = () => {
 
                     <li className="flex items-center gap-2">
                       <FaTv className="text-blue-600" />
-                      <span>20.5 giờ</span>
+                      <span>{(course.data?.Section?.reduce((total, section) => total + (section.lessons?.length || 0), 0)||0)*3} giờ</span>
                     </li>
                     <li className="flex items-center gap-2">
                       <IoMdDocument className="text-green-600" />
-                      <span>15 bài học</span>
+                      <span>{course.data?.Section?.reduce((total, section) => total + (section.lessons?.length || 0), 0)} bài học</span>
                     </li>
                     <li className="flex items-center gap-2">
                       <FaVideo className="text-red-600" />

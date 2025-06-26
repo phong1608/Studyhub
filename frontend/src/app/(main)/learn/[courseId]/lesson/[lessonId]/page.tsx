@@ -10,15 +10,12 @@ import { useAppContext } from "@/contexts/AuthContext";
 import axios from "axios";
 import { useCourseContext } from "@/contexts/CourseContext";
 import Comment from "@/components/Comment";
-import { RootComment } from "@/interfaces/models/comment.interface";
 import htmlParser from 'html-react-parser';
-
 const LearnPage = () => {
   const router = useRouter();
   const { courseId, lessonId } = useParams();
   const { isAuthenticated,loading } = useAppContext();
   const [showSummary,setShowSummary] = useState(false)
-  const [comments, setComments] = useState<RootComment[] | null>([]);
   const [lesson, setLesson] = useState<ILesson | null>(null);
   const { data } = useApi<ISection[]>(`section/${courseId}`, { method: 'get' });
 
@@ -37,14 +34,9 @@ const LearnPage = () => {
       setLesson(response.data);
     };
 
-    const fetchComments = async () => {
-      const response = await axios.get(`http://localhost:3333/comment/lesson=${lessonId}/comment`, { withCredentials: true });
-      setComments(response.data);
-    };
-
+    
     if (isAuthenticated) {
       fetchLesson();
-      fetchComments();
     }
   }, [lessonId, courseId, isAuthenticated, router,loading]);
 
@@ -67,27 +59,38 @@ const LearnPage = () => {
 
         <div className="flex flex-col lg:flex-row gap-8 xl:gap-12">
           <main className="lg:w-2/3 xl:w-3/4 space-y-8">
-            <div className="w-full relative pb-[56.25%] overflow-hidden rounded-xl shadow-lg">
-              <div className="absolute inset-0">
-                <VideoPlayer url={lesson?.lessonVideo.videoUrl || ''} />
+            {lesson?.lessonType === "Video" ? (
+              <div className=" relative pb-[56.25%] overflow-hidden rounded-xl shadow-lg">
+                <div className="absolute inset-0">
+                  <VideoPlayer url={lesson?.lessonVideo.videoUrl || ''} />
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="w-full max-h-[500px] overflow-y-auto border border-gray-300 p-4 whitespace-pre-line bg-white rounded-xl shadow-sm">
+                {htmlParser(lesson?.lessonText.content || "")}
+              </div>
+            )}
             <div className="mt-4">
-          <button
+         { lesson?.lessonType=="Video"&&
+         <>
+         <button
             onClick={() => setShowSummary((prev) => !prev)}
             className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-md shadow hover:bg-blue-700 transition"
-          >
+            >
             {showSummary ? 'Ẩn tóm tắt' : 'Hiển thị tóm tắt'}
           </button>
+          
+          </>
+          }
 
           {showSummary && (
             <div className="mt-4 bg-white rounded-xl shadow-sm p-6 border border-gray-200">
               <h3 className="text-lg font-bold mb-2 text-gray-800">Tóm tắt bài giảng</h3>
-              <p className="text-gray-600 leading-relaxed">
+              <div className="text-gray-600 leading-relaxed">
                 <>
                 {htmlParser(lesson?.lessonVideo.summarize||"") || 'Chưa có tóm tắt cho bài giảng này.'}
                 </>
-              </p>
+              </div>
             </div>
           )}
         </div>
@@ -98,7 +101,7 @@ const LearnPage = () => {
               </p>
             </section>
             <section className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
-              <Comment comments={comments || []} lessonId={Array.isArray(lessonId) ? lessonId[0] : lessonId || ''} />
+              <Comment lessonId={Array.isArray(lessonId) ? lessonId[0] : lessonId || ''} />
             </section>
           </main>
 

@@ -38,10 +38,9 @@ const AddSectionPage: React.FC = () => {
         router.push('/');
     }
     const [name, setSectionname] = useState('');
-    const [position, setSectionPosition] = useState('');
     const { courseId } = useParams();
     const handleSubmit = async(e: React.FormEvent) => {
-        await axios.post(`http://localhost:3333/section/create`, {name,position,courseId},{withCredentials: true});
+        await axios.post(`http://localhost:3333/section/create`, {name,courseId},{withCredentials: true});
         
         e.preventDefault();
         
@@ -72,15 +71,15 @@ const AddSectionPage: React.FC = () => {
             )}
             <ul>
                 {sections && sections.length > 0 ? (
-                    sections.map((section) => (
-                        <li key={section.position} className="mb-4">
+                    sections.map((section,index) => (
+                        <li key={index} className="mb-4">
                             <details className="bg-white shadow-md rounded-lg p-6 hover:shadow-lg transition-shadow duration-300">
-                                <summary className="text-xl font-semibold mb-2 cursor-pointer">{section.position}.{section.name}</summary>
+                                <summary className="text-xl font-semibold mb-2 cursor-pointer">{index+1}.{section.name}</summary>
                                 <ul className="mt-4">
                                     {section.lessons.length > 0 ? (
-                                        section.lessons.map((lesson) => (
+                                        section.lessons.map((lesson,idx) => (
                                         <li
-                                        key={lesson.position}
+                                        key={idx}
                                         className="mb-2 cursor-pointer text-blue-500 hover:underline flex items-center"
                                         >
                                             <Link href={`/instructor/course/lesson/${lesson.id}`} className="flex items-center">
@@ -89,7 +88,7 @@ const AddSectionPage: React.FC = () => {
                                                 ) : (
                                                     <IoDocumentTextOutline className="mr-5 text-green-500" />
                                                 )}
-                                                {lesson.position}.{lesson.name}
+                                                {idx+1}.{lesson.name}
                                             </Link>
                                         </li>
                                         ))
@@ -117,21 +116,10 @@ const AddSectionPage: React.FC = () => {
             </button>
             </div>
             {showForm && (
-            <div className="bg-white p-8 rounded shadow-md w-full max-w-md">
+            <div className="bg-white p-8 rounded shadow-md w-full max-w-md">    
                 <h2 className="text-2xl font-bold mb-6">Thêm chương mới</h2>
                 <form onSubmit={handleSubmit}>
-                <div className="mb-4">
-                    <label htmlFor="Position" className="block text-gray-700 font-bold mb-2">
-                    Section Position
-                    </label>
-                    <input
-                    id="position"
-                    value={position}
-                    onChange={(e) => setSectionPosition(e.target.value)}
-                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                    />
-                </div>
+                
                 <div className="mb-4">
                     <label htmlFor="name" className="block text-gray-700 font-bold mb-2">
                     Section name

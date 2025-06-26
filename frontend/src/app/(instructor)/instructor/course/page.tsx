@@ -51,7 +51,7 @@ export default  function InstructorPage() {
           </div>
           <div className="fixed right-10">
         <Button asChild>
-          <Link href="/instructor/course/create">New Course</Link>
+          <Link href="/instructor/course/create">Khóa học mới</Link>
         </Button>
           </div>
         </div>

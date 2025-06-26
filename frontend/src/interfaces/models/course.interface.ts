@@ -6,7 +6,9 @@ interface Course{
     thumbnail:string
     price:number,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    instructor:any
+    instructor:any,
+    dicount_price:number,
+    rating:number
 }
 interface CoursePreview{
     id:string,

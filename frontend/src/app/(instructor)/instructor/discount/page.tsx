@@ -103,12 +103,12 @@ const IndexPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-2xl font-bold text-gray-800 mb-4">Discount Management</h1>
+        <h1 className="text-2xl font-bold text-gray-800 mb-4">Quản lý khuyến mãi</h1>
         <button
           onClick={openAddModal}
           className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 mb-4"
         >
-          Add Discount
+          Thêm khuyến mãi
         </button>
         <div className="bg-white shadow rounded-lg">
           <table className="min-w-full divide-y divide-gray-200">
@@ -154,13 +154,13 @@ const IndexPage: React.FC = () => {
                       onClick={() => openEditModal(d)}
                       className="text-blue-600 hover:text-blue-900 mr-4"
                     >
-                      Edit
+                        Chỉnh sửa
                     </button>
                     <button
                       // onClick={() => handleDelete(d.id)}
                       className="text-red-600 hover:text-red-900"
                     >
-                      Delete
+                      Xóa
                     </button>
                   </td>
                 </tr>

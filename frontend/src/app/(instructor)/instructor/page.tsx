@@ -2,6 +2,7 @@
 import { useAppContext } from '@/contexts/AuthContext';
 import useApi from '@/hooks/useApi';
 import { useRouter } from 'next/navigation';
+import {RevenueChart,RevenueData} from '@/components/Chart';
 import React from 'react';
 import {  
     HiDocumentText,  
@@ -30,8 +31,17 @@ export default function AdminDashboard() {
       }
   }, [isAuthenticated, loading, router])
     const courses = useApi<CourseProps[]>('course/me', { method: 'get',withCredentials:true });
-  
-    console.log(courses.data);
+    const revenue = useApi<RevenueData[]>('revenue/me',{withCredentials:true})
+    const formattedData = revenue?.data?.map((item) => {
+      const date = new Date(item.createdAt);
+      const formatted = date.toLocaleDateString('vi-VN')
+
+      return {
+        amount: item.amount,
+        createdAt: formatted,
+      };
+    });
+    
   
     return (
       <div className="p-4 sm:ml-64 flex flex-col justify-start bg-gray-100 ">
@@ -39,6 +49,10 @@ export default function AdminDashboard() {
         
         <h1 className="text-4xl  font-bold text-gray-800 mb-4">Tổng Quan</h1>
         {/* Dashboard Stats */}
+         {/* Revenue Chart */}
+        <div className="mt-6">
+          <RevenueChart data={formattedData || []} />
+        </div>
         <div className="grid mt-10 grid-cols-4 gap-4 mb-6">
           <div className="bg-white p-4 rounded-lg shadow flex items-center space-x-4">
             <HiDocumentText className="h-10 w-10 text-green-500" />

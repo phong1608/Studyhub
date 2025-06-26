@@ -16,24 +16,24 @@ const Section: React.FC<{ sections: ISection[] | undefined, courseId: string | u
         <div className="p-4 border-2 border-gray-200 border-dashed rounded-lg dark:border-gray-700">
             <ul>
                 {sections && sections.length > 0 ? (
-                    sections.map((section) => (
-                        <li key={section.position} className="mb-4">
+                    sections.map((section,index) => (
+                        <li key={index} className="mb-4">
                             <details className="bg-white shadow-md rounded-lg p-6 hover:shadow-lg transition-shadow duration-300">
                                 <summary className="text-xl font-semibold mb-2 cursor-pointer">
-                                    {section.position}.{section.name}
+                                    {index+1}.{section.name}
                                 </summary>
                                 <ul className="mt-4">
                                     {section.lessons.length > 0 ? (
-                                        section.lessons.map((lesson) => (
+                                        section.lessons.map((lesson,idx) => (
                                             <li
-                                                key={lesson.position}
+                                                key={idx}
                                                 className={`mb-2 flex justify-between items-center ${
                                                     isDisable ? "text-gray-500" : "cursor-pointer text-blue-500 hover:underline"
                                                 }`}
                                                 onClick={!isDisable ? () => handleLessonClick(lesson.id) : undefined}
                                             >
                                                 <span>
-                                                    {lesson.position}.{lesson.name}
+                                                    {idx+1}.{lesson.name}
                                                 </span>
                                                 {lesson.lessonType === "Video" ? (
                                                     <FaVideo className={`inline-block ${isDisable ? "text-gray-500" : "text-blue-500"}`} />

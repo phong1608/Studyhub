@@ -1,0 +1,58 @@
+name: Deploy to Amazon ECS
+
+on:
+  push:
+    branches: [ "main" ]
+
+env:
+  AWS_REGION: us-east-1
+  ECS_SERVICE: my-ecs-service
+  ECS_CLUSTER: my-ecs-cluster
+  ECS_TASK_DEFINITION: .aws/task-definition.json
+  CONTAINER_NAME: learnhub
+  DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+    - name: Checkout source code
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Set up Terraform
+      uses: hashicorp/setup-terraform@v3
+
+    - name: Terraform Init & Apply
+      working-directory: infrastructure/terraform
+      run: |
+        terraform init
+        terraform apply -auto-approve
+
+    - name: Fill in the new image ID in the ECS task definition
+      id: task-def
+      uses: aws-actions/amazon-ecs-render-task-definition@v1
+      with:
+        task-definition: ${{ env.ECS_TASK_DEFINITION }}
+        container-name: ${{ env.CONTAINER_NAME }}
+        image: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.CONTAINER_NAME }}:latest
+
+    - name: Deploy Amazon ECS task definition
+      uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+      with:
+        task-definition: ${{ steps.task-def.outputs.task-definition }}
+        service: ${{ env.ECS_SERVICE }}
+        cluster: ${{ env.ECS_CLUSTER }}
+        wait-for-service-stability: true

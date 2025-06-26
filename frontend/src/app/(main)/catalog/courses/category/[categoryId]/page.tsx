@@ -35,12 +35,15 @@ const CategoryPage = () => {
       const response = await axios.get(
         `http://localhost:3333/course/category/${categoryId}/page=1?${queryString}`
       );
-      if (!response.data || response.data.length === 0) {
+      const categoryData = await axios.get(
+        `http://localhost:3333/category/${categoryId}`
+      );
+      if (!categoryData.data || categoryData.data.length === 0) {
         router.push("/404");
         return;
       }
-      setCourses(response.data.Course);
-      setCategoryName(response.data.name);
+      setCourses(response.data);
+      setCategoryName(categoryData.data.name);
     } catch (error) {
       router.push("/404");
       console.error("Error fetching data:", error);

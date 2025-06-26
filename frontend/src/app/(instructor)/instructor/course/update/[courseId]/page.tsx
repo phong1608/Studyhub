@@ -17,6 +17,7 @@ import useApi from '@/hooks/useApi';
 import { useParams } from 'next/navigation';
 import axios from 'axios';
 import { Category } from '@/components/GroupCourses';
+import {toast} from 'react-toastify'
 interface CourseData {
   id: string;
   name: string;
@@ -27,6 +28,7 @@ interface CourseData {
   thumbnail: string | null;
   durationHours: number;
   lessonsCount: number;
+  isPublished:boolean
 }
 import Link from 'next/link';
 
@@ -60,7 +62,6 @@ export default function UpdateCoursePage() {
         if (thumbnailPreview) {
         formData.append('thumbnail', thumbnailPreview);
         }
-        console.log(category)
         await axios.put(`http://localhost:3333/course/update/${courseId}`, formData, {
         headers: {
         'Content-Type': 'multipart/form-data',
@@ -70,6 +71,11 @@ export default function UpdateCoursePage() {
         setIsSaving(false);
         setShowSuccess(true);
     };
+    const handlePublish = async () => {
+        await axios.post(`http://localhost:3333/course/publish/${courseId}`,{}, { withCredentials: true });
+        toast.success("Khóa học đã được xuất bản")
+        course.refetch()
+    }
     const handleThumbnailChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -103,9 +109,15 @@ export default function UpdateCoursePage() {
         </Head>
         {course.data && (
         <main className="max-w-4xl mx-auto bg-white dark:bg-gray-900 rounded-2xl shadow-xl overflow-hidden border border-gray-200 dark:border-gray-700">
-            <div className='p-6 md:p-8 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50'>
-                 <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2">Update Course Information</h1>
-                 <p className='text-gray-600 dark:text-gray-400 text-sm'>Modify the details for course ID: <span className='font-mono bg-gray-200 dark:bg-gray-700 px-1.5 py-0.5 rounded text-xs'>{course.data.id}</span></p>
+           <div className='p-6 md:p-8 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 flex flex-col md:flex-row md:items-center md:justify-between gap-4'>
+                <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">Cập nhật thông tin khóa học</h1>
+                {!course.data.isPublished&&<button 
+                    type="button"
+                    className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                    onClick={handlePublish}
+                >
+                    <LuUpload size={18} /> Xuất bản khóa học
+                </button>}
             </div>
 
             <form onSubmit={handleSubmit} className="p-6 md:p-8 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2">
@@ -139,7 +151,7 @@ export default function UpdateCoursePage() {
                 <div className='col-span-1'>
                     <InputField id="level" label="Difficulty Level" type="select" value={course.data.level} onChange={(e)=>setLevel(e.target.value)} icon={<LuChartBar {...iconProps} />} required />
 
-                    <InputField id="price" label="Price (USD)" type="number" value={price??""} onChange={(e)=>setPrice(e.target.value)} icon={<LuDollarSign {...iconProps} />} placeholder="e.g., 49.99" required />
+                    <InputField id="price" label="Giá (VNĐ)" type="number" value={price??""} onChange={(e)=>setPrice(e.target.value)} icon={<LuDollarSign {...iconProps} />} placeholder="e.g., 100.000" required />
                     
                      <div className='grid grid-cols-2 gap-4 mb-5'>
                         
@@ -149,7 +161,7 @@ export default function UpdateCoursePage() {
 
                 {/* Thumbnail Display */}
                 <div className="col-1 md:col-span-2 mb-5">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Course Thumbnail</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Ảnh đại diện</label>
                     <div className='flex  items-center gap-4'>
                         {thumbnailPreview ? (
                             <Image src={thumbnailPreview} width={300} height={200} alt="Thumbnail Preview" className="w-48 h-32 object-cover rounded-lg border border-gray-300 dark:border-gray-600"/>
@@ -160,7 +172,7 @@ export default function UpdateCoursePage() {
                         )}
                         <label htmlFor="thumbnailUpload" className="cursor-pointer inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150">
                             <LuUpload size={18} className="mr-2 -ml-1"/>
-                            Change Image
+                            Đổi ảnh đại diện
                             <input id="thumbnailUpload" name="thumbnailUpload" type="file" className="sr-only" accept="image/png, image/jpeg, image/webp" onChange={handleThumbnailChange}/>
                         </label>
                     </div>

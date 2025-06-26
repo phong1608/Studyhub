@@ -1,11 +1,13 @@
 'use client'
 import useApi from "@/hooks/useApi"
 import { useAppContext } from "@/contexts/AuthContext"
-import React, { useState, useEffect,useRef } from "react"
-import JoditEditor from 'jodit-react';
+import React, { useState, useEffect } from "react"
 import Image from "next/image"
 import axios from "axios"
 import { useRouter } from 'next/navigation'
+import { z } from 'zod';
+import {toast} from 'react-toastify'
+import RichTextEditor from "@/components/TextEditor";
 export type Category = {
   id: string,
   name: string
@@ -14,7 +16,7 @@ export type CourseLevel = 'Intermediate' | 'Advanced' | 'Beginner';
 const NewCoursePage = () => {
     const { isAuthenticated, loading } = useAppContext()
     const router = useRouter()
-
+    
   useEffect(() => {
     if (!loading && isAuthenticated === false) {
       router.push('/')
@@ -24,41 +26,85 @@ const NewCoursePage = () => {
   const [name,setName] = useState<string | null>(null)
   const [price,setPrice] = useState<number | null>(null)
   const [description,setContent] = useState<string | undefined>('')
-  const editor = useRef(null)
-  const [level,setLevel] = useState<string | null>(null)
+  const [level,setLevel] = useState<string | null>("Beginner")
   const [category,setcategory] = useState<string | null>(null)
+  const [displayPrice, setDisplayPrice] = useState<string>('');
 
+  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const raw = e.target.value.replace(/\./g, ''); // loại bỏ dấu chấm khi người dùng gõ
+  const number = parseInt(raw, 10);
+
+  if (isNaN(number)) {
+    setPrice(null);
+    setDisplayPrice('');
+    return;
+  }
+
+  setPrice(number);
+  setDisplayPrice(number.toLocaleString('vi-VN')); // thêm dấu . theo kiểu VN
+};
+const onChange = (content: string) => {
+    setContent(content);
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       setPreviewImage(e.target.files[0]);
     }
   }
+  
 
 
-  const hanldeSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+// Define Zod schema for course validation
+const CourseSchema = z.object({
+  name: z.string().min(1, 'Tên khóa học không được để trống'),
+  price: z.number().min(1000, 'Giá phải lớn hơn 1000 VND'),
+  description: z.string().min(1, 'Mô tả không được để trống'),
+  level: z.enum(['Beginner', 'Intermediate', 'Advanced'], {
+    errorMap: () => ({ message: 'Vui lòng chọn trình độ hợp lệ' })
+  }),
+  category: z.string().min(1, 'Vui lòng chọn danh mục'),
+  thumbnail: z.instanceof(File).optional(),
+});
 
+// Inside your component, update hanldeSubmit
+const hanldeSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+
+  try {
+    const validated = CourseSchema.parse({
+      name,
+      price,
+      description,
+      level,
+      category,
+      thumbnail,
+    });
 
     const formData = new FormData();
-    formData.append('name', name || '');
-    formData.append('price', price ? price.toString() : '');
-    formData.append('description', description || '');
-    formData.append('level', level || '');
-    formData.append('category', category || '');
-    if (thumbnail) {
-      formData.append('thumbnail', thumbnail);
+    formData.append('name', validated.name);
+    formData.append('price', validated.price.toString());
+    formData.append('description', validated.description);
+    formData.append('level', validated.level);
+    formData.append('category', validated.category);
+    if (validated.thumbnail) {
+      formData.append('thumbnail', validated.thumbnail);
     }
 
-    await axios.post(`${process.env.NEXT_PUBLIC_URL}/course/create`, formData, {
-      headers: {
-      'Content-Type': 'multipart/form-data',
-      },
+    await axios.post(`http://localhost:3333/course/create`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
       withCredentials: true
     });
-    router.push('/instructor')
 
+    router.push('/instructor');
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      toast.error('Lỗi dữ liệu: ' + error.errors[0].message);
+    } else {
+      console.error('Unexpected error', error);
+    }
   }
+};
   const { data } = useApi<Category[]>('category/get', { method: 'get' })
 
   return (
@@ -85,12 +131,15 @@ const NewCoursePage = () => {
 
         <div className="flex flex-col md:flex-row gap-4">
           <div className="w-full md:w-1/3">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Giá</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Giá(VND)</label>
             <input
-              type="number"
-              className="mt-1 w-full px-4 py-2 border rounded-lg bg-white text-gray-800 dark:bg-gray-700 dark:text-white dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              onChange={(e) => setPrice(e.target.value ? parseFloat(e.target.value) : null)}
-            />
+            type="text"
+            value={displayPrice}
+            onChange={handlePriceChange}
+            inputMode="numeric"
+            className="mt-1 w-full px-4 py-2 border rounded-lg bg-white text-gray-800 dark:bg-gray-700 dark:text-white dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+
           </div>
           <div className="w-full md:w-1/3">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Danh mục</label>
@@ -98,7 +147,7 @@ const NewCoursePage = () => {
               className="mt-1 w-full px-4 py-2 border rounded-lg bg-white text-gray-800 dark:bg-gray-700 dark:text-white dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
               onChange={(e) => setcategory(e.target.value)}
             >
-              <option disabled selected>--Danh mục--</option>
+              <option disabled defaultValue={""}>--Danh mục--</option>
 
               {data?.map((item, index) => (
                 <option key={index} value={item.id}>{item.name}</option>
@@ -111,7 +160,7 @@ const NewCoursePage = () => {
               className="mt-1 w-full px-4 py-2 border rounded-lg bg-white text-gray-800 dark:bg-gray-700 dark:text-white dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
               onChange={(e) => setLevel(e.target.value)}
             >
-              <option disabled selected>--Chọn mức độ--</option>
+              <option disabled defaultValue=''>--Chọn mức độ--</option>
               <option>Beginner</option>
               <option>Intermediate</option>
               <option>Advanced</option>
@@ -122,7 +171,7 @@ const NewCoursePage = () => {
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Mô tả khóa học</label>
           <div className="mt-2">
-            <JoditEditor  ref={editor}  onChange={(e) => setContent(e)} />
+            <RichTextEditor content={description||""} onChange={onChange}/>
           </div>
         </div>
 

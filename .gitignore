@@ -86,7 +86,7 @@ web_modules/
 # Next.js build output
 .next
 out
-
+.secrets
 # Nuxt.js build / generate output
 .nuxt
 dist
@@ -128,3 +128,18 @@ build
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+# Local .terraform directories
+ **/.terraform/*
+
+#  Ignore variables files
+ *.auto.tfvars
+
+#  Ignore override files
+ *.tfoverride
+
+#  Ignore environment-specific files
+ .envrc
+
+#  Ignore CLI configuration files
+ .terraformrc
+ terraform.rc
