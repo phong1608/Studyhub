@@ -28,5 +28,5 @@ COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/build ./build
 
 # Expose the port and run the app
-EXPOSE 4000
+EXPOSE 8080
 CMD ["npm", "run", "start"]
