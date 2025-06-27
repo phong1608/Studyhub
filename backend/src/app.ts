@@ -50,7 +50,7 @@ app.use((error: IErrorResponse, _req: Request, res: Response, next: NextFunction
 });
 
 
-const port = process.env.PORT || 3333;
+const port = process.env.PORT || 8080;
 const server = app.listen(port, () => {
   log.info(`Listening at http://localhost:${port}/api`)
 });

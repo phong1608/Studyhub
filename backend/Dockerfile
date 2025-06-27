@@ -1,32 +1,34 @@
-# Build stage
-FROM node:20-alpine3.18 AS builder
+# ----- Build stage -----
+FROM node:20-alpine AS builder
 
-# Create app directory
 WORKDIR /app
 
-# Copy package files and prisma schema
 COPY package*.json ./
 COPY prisma ./prisma/
 
-# Install dependencies
-RUN npm install
+RUN npm install --legacy-peer-deps
 
-# Copy the rest of the source code
+# 👉 Tạo client Prisma sau khi cài dependency và có schema
+RUN npx prisma generate
+
 COPY . .
 
-# Build the app
 RUN npm run build
 
-# Production stage
-FROM node:20-alpine3.18
+# ----- Production stage -----
+FROM node:20-alpine
 
 WORKDIR /app
 
-# Copy build artifacts and dependencies from builder
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package*.json ./
-COPY --from=builder /app/build ./build
+COPY package*.json ./
+RUN npm install --omit=dev --legacy-peer-deps
 
-# Expose the port and run the app
+COPY --from=builder /app/build ./build
+COPY --from=builder /app/prisma ./prisma
+
+# 👉 Copy folder `.prisma` được generate bên trong node_modules
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
+
 EXPOSE 8080
 CMD ["npm", "run", "start"]
