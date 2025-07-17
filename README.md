@@ -1,6 +1,6 @@
-# 📚 LearnHub - Fullstack E-learning Platform
+# 📚 StudyHub - Fullstack E-learning Platform
 
-**LearnHub** is a modern fullstack e-learning platform that allows users to create, manage, and participate in online courses. It supports features such as course management, user authentication and content delivery. The platform is built with a scalable architecture using modern technologies.
+**StudyHub** is a modern fullstack e-learning platform that allows users to create, manage, and participate in online courses. It supports features such as course management, user authentication and content delivery. The platform is built with a scalable architecture using modern technologies.
 
 ---
 
